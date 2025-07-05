@@ -1,0 +1,320 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import AdminStats from '@/components/AdminStats';
+import { Stats } from '@/types/stats';
+import View from '@/components/View';
+import NavBar from '@/components/NavBar';
+import Modal from '@/components/modals/Modal';
+import { Hero } from '@/types/hero';
+import { Game } from '@/types/game';
+import { Platform } from '@/types/platform';
+import { Callsign } from '@/types/callsign';
+import { Company } from '@/types/company';
+import { User } from '@/types/user';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { baseURL } from '@/utils/constants';
+import { ReferenceDataContext } from "@/contexts/ReferenceDataContext";
+
+export default function MainPage() {
+  const [stats, setStats] = useState<Stats>({
+    heroes: 0,
+    games: 0,
+    users: 0,
+    platforms: 0,
+    callsigns: 0,
+    companies: 0
+  });
+
+  const [currentView, setCurrentView] = useState<string | null>(null);
+
+  // 🔹 Modal control state
+  const [userName, setUserName] = useState<string | null>("Guest");
+  const [modalType, setModalType] = useState<string | null>(null);
+  const [modalProps, setModalProps] = useState<any>(null);
+  const [allGames, setAllGames] = useState<Game[]>([]);
+  const [allCompanies, setAllCompanies] = useState<Company[]>([]);
+  const [allCallsigns, setAllCallsigns] = useState<Callsign[]>([]);
+  const [allPlatforms, setAllPlatforms] = useState<Platform[]>([]);
+  const [allHeroes, setAllHeroes] = useState<Hero[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  
+  const refreshViewRef = useRef<(() => void) | null>(null);
+
+  const openModal = (type: string, props?: any) => {
+    setModalType(type);
+    setModalProps(props || {});
+  };
+
+  const refreshStats = async () => {
+    const res = await fetch(`${baseURL}/api/admin/getStats`);
+    const json = await res.json();
+    setStats(json.data);
+    setStats({
+          heroes: json.data.heroes,
+          games: json.data.games,
+          users: json.data.users,
+          platforms: json.data.platforms,
+          callsigns: json.data.callsigns,
+          companies: json.data.companies,
+          
+        });
+  };
+
+  
+  const openAddModal = (subject: string) => {
+    switch (subject){
+      case "Hero":
+        openModal("hero-add", {
+          games: allGames,
+          onSubmit: handleAdd,
+          onSuccess: () => {
+            refreshStats();
+            refreshViewRef.current?.();
+          },
+        });
+        break;
+      case "Game":
+        openModal("game-add", {
+          companies: allCompanies,
+          callsigns: allCallsigns,
+          platforms: allPlatforms,
+          onSubmit: handleAdd,
+          onSuccess: () => {
+            refreshStats();
+            refreshViewRef.current?.();
+          },
+        });
+        break;
+      case "Platform":
+        openModal("platform-add", {
+          onSubmit: handleAdd2,
+          onSuccess: () => {
+            refreshStats();
+            refreshViewRef.current?.();
+          },
+        });
+        break;
+      case "Company":
+        openModal("company-add", {
+          onSubmit: handleAdd,
+          onSuccess: () => {
+            refreshStats();
+            refreshViewRef.current?.();
+          },
+        });
+        break;
+      case "Callsign":
+        openModal("callsign-add", {
+          onSubmit: handleAdd2,
+          onSuccess: () => {
+            refreshStats();
+            refreshViewRef.current?.();
+          },
+        });
+        break;
+      case "User":
+        openModal("user-add", {
+          onSubmit: handleAdd2,
+          onSuccess: () => {
+            refreshStats();
+            refreshViewRef.current?.();
+          },
+        });
+        break;
+      default:
+        return;
+    }
+    
+  };
+
+  const closeModal = () => {
+    setModalType(null);
+    setModalProps(null);
+  };
+
+  const handleAdd = async (subject: string, formData : FormData) =>{
+    try{
+      
+      await axios.post(`${baseURL}/`+subject.toLowerCase()+`/add`, formData);
+      toast.success(subject+ " added!");
+    }catch(error){
+      toast.error("Failed to add " + subject.toLowerCase() );
+    }
+  }
+
+  type AddPayloads = {
+    Platform: { platformName: string };
+    Callsign: { callsign: string; callsignPlural: string };
+    User: {userName: string; userPassword: string; userRole: string; isActive: boolean};
+    
+  };
+
+  type SubjectType = keyof AddPayloads; // 'platform' | 'callsign'
+
+  const handleAdd2 = async <T extends SubjectType>(
+    subject: T,
+    data: AddPayloads[T]
+  ) => {
+    try {
+      console.log("Upload with data: " + JSON.stringify(data));
+      console.log(`${baseURL}/`+subject.toLowerCase()+`/add`);
+      await axios.post(`${baseURL}/`+subject.toLowerCase()+`/add`, data, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      toast.success(`${subject} added!`);
+    } catch (error) {
+      toast.error(`Failed to add ${subject.toLowerCase()}.`);
+    }
+  };
+
+
+
+  useEffect(() => {
+    async function fetchAll() {
+      try {
+        const [statsRes, gamesRes, heroesRes, platformsRes, callsignsRes, companiesRes, usersRes] = await Promise.all([
+          fetch(`${baseURL}/api/admin/getStats`),
+          fetch(`${baseURL}/game/getAll`),
+          fetch(`${baseURL}/hero/getAll`),
+          fetch(`${baseURL}/platform/getAll`),
+          fetch(`${baseURL}/callsign/getAll`),
+          fetch(`${baseURL}/company/getAll`),
+          fetch(`${baseURL}/user/getAll`)
+        ]);
+
+        const statsJson = await statsRes.json();
+        const gamesJson = await gamesRes.json();
+        const heroesJson = await heroesRes.json();
+        const platformsJson = await platformsRes.json();
+        const callsignsJson = await callsignsRes.json();
+        const companiesJson = await companiesRes.json();
+        const usersJson = await usersRes.json();
+
+        setStats({
+          heroes: statsJson.data.heroes,
+          games: statsJson.data.games,
+          users: statsJson.data.users,
+          platforms: statsJson.data.platforms,
+          callsigns: statsJson.data.callsigns,
+          companies: statsJson.data.companies,
+          
+        });
+
+        setAllGames(gamesJson.data);
+        setAllHeroes(heroesJson.data);
+        setAllCompanies(companiesJson.data);
+        setAllCallsigns(callsignsJson.data);
+        setAllPlatforms(platformsJson.data);
+        setAllUsers(usersJson.data);
+      } catch (err) {
+        console.error('Failed to fetch:', err);
+      }
+    }
+
+    fetchAll();
+  }, []);
+
+  const logoutPrompt = () => {
+
+      openModal("confirm-logout", {
+          onClose: closeModal,
+          onSuccess: handleLogout,
+        });
+  }
+
+  const resetCurrentView = () => {
+    setCurrentView(null);
+  }
+
+  
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // or sessionStorage
+    window.location.href = "/login";
+  };
+
+  useEffect(() => {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      const loggedUser = JSON.parse(stored);
+      if (loggedUser?.userName) {
+        setUserName(loggedUser.userName);
+      }
+    }
+  }, []);
+
+  return (
+    <div className="mx-auto relative">
+      <div className="-mx-6 bg-blue-400 border-b border-gray-300">
+        <NavBar
+          onViewSelect={setCurrentView}
+          openModal={openAddModal}
+        />
+      </div>
+
+      <div className="flex justify-between items-center mb-4">
+        <p>
+          Welcome! You're logged in as{" "}
+          <span className="font-semibold text-blue-700">
+            {userName}
+          </span>
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={resetCurrentView}
+            className="btn-base btn-blue"
+          >
+            Stats
+          </button>
+          <button
+            onClick={logoutPrompt}
+            className="btn-base btn-red"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white shadow rounded p-4 w-full">
+        {currentView ? (
+          <ReferenceDataContext.Provider
+          value={{
+            heroes: allHeroes,
+            games: allGames,
+            companies: allCompanies,
+            callsigns: allCallsigns,
+            platforms: allPlatforms,
+            users: allUsers,
+          }}
+        >
+            <View 
+            subject={currentView} 
+            onModalOpen={openModal} 
+            refreshStats={refreshStats} 
+            onRegisterRefresh={(fn) => {
+              refreshViewRef.current = fn;
+            }}/>
+
+        </ReferenceDataContext.Provider>
+          
+        ) : (
+          <AdminStats stats={stats} />
+        )}
+      </div>
+
+      {/* 🔹 Render Modal */}
+      {modalType && (
+      <Modal
+        modalType={modalType}
+        modalProps={modalProps}
+        onClose={closeModal}
+        {...((modalType === "confirm-delete" || modalType === "confirm-logout") && { isCompact: true })}
+      />
+    )}
+    </div>
+  );
+}
