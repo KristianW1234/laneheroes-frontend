@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { User } from '@/types/user';
 import { createInputChangeHandler } from '@/utils/handleInputChange';
+import { isValidEmail } from '@/utils/isValidEmail';
+import toast from 'react-hot-toast';
 
 
 export default function UserEdit({
@@ -30,6 +32,11 @@ export default function UserEdit({
   const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
   const handleSubmit = async () => {
+
+    if (!isValidEmail(form.userEmail)) {
+      toast.error("Invalid email format.");
+      return;
+    }
     
     const userData = {
       id: user.id,  // Include ID for update

@@ -147,7 +147,7 @@ export default function MainPage() {
   type AddPayloads = {
     Platform: { platformName: string };
     Callsign: { callsign: string; callsignPlural: string };
-    User: {userName: string; userPassword: string; userRole: string; isActive: boolean};
+    User: {userName: string; userPassword: string; userEmail: string; userRole: string; isActive: boolean};
     
   };
 
