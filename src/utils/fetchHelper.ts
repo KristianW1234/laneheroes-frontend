@@ -1,3 +1,5 @@
+import { getFetchHeaders } from "@/utils/fetchHeaders";
+
 export async function fetchData<T>(
   url: string,
   method: string = "GET",
@@ -5,7 +7,7 @@ export async function fetchData<T>(
 ): Promise<T> {
   const res = await fetch(url, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: getFetchHeaders(),
     body: body ? JSON.stringify(body) : undefined,
   });
 

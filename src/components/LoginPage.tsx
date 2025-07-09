@@ -27,15 +27,20 @@ export default function LoginPage() {
 
       const json = await res.json();
 
-      console.log("json is " + JSON.stringify(json));
+      console.log("RES IS: " + JSON.stringify(res));
+      console.log("JSON IS: " + JSON.stringify(json));
 
-      if (res.ok && json.status === "Success") {
+      if (json.status === "Success") {
         // Save the session to localStorage
-        localStorage.setItem("user", JSON.stringify(json.data));
+
+        console.log("OK!");
+        localStorage.setItem("user", JSON.stringify(json.data.user));
+        localStorage.setItem("token", json.data.token);
 
         // Redirect to main page
         router.push("/main");
       } else {
+        console.log("Not OK!");
         setError("Invalid credentials.");
       }
     } catch (err) {

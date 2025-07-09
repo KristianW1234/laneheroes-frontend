@@ -16,6 +16,9 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { baseURL } from '@/utils/constants';
 import { ReferenceDataContext } from "@/contexts/ReferenceDataContext";
+import { getAxiosHeaders } from '@/utils/axiosHeaders';
+import { getFetchHeaders } from '@/utils/fetchHeaders';
+import { isTokenExpired } from '@/utils/auth'
 
 export default function MainPage() {
   const [stats, setStats] = useState<Stats>({
@@ -48,7 +51,7 @@ export default function MainPage() {
   };
 
   const refreshStats = async () => {
-    const res = await fetch(`${baseURL}/api/admin/getStats`);
+    const res = await fetch(`${baseURL}/api/admin/getStats`,{headers: getFetchHeaders()});
     const json = await res.json();
     setStats(json.data);
     setStats({
@@ -137,7 +140,7 @@ export default function MainPage() {
   const handleAdd = async (subject: string, formData : FormData) =>{
     try{
       
-      await axios.post(`${baseURL}/`+subject.toLowerCase()+`/add`, formData);
+      await axios.post(`${baseURL}/`+subject.toLowerCase()+`/add`, formData, {headers: getAxiosHeaders()});
       toast.success(subject+ " added!");
     }catch(error){
       toast.error("Failed to add " + subject.toLowerCase() );
@@ -160,11 +163,7 @@ export default function MainPage() {
     try {
       console.log("Upload with data: " + JSON.stringify(data));
       console.log(`${baseURL}/`+subject.toLowerCase()+`/add`);
-      await axios.post(`${baseURL}/`+subject.toLowerCase()+`/add`, data, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await axios.post(`${baseURL}/`+subject.toLowerCase()+`/add`, data, {headers: getAxiosHeaders()});
       toast.success(`${subject} added!`);
     } catch (error) {
       toast.error(`Failed to add ${subject.toLowerCase()}.`);
@@ -177,13 +176,13 @@ export default function MainPage() {
     async function fetchAll() {
       try {
         const [statsRes, gamesRes, heroesRes, platformsRes, callsignsRes, companiesRes, usersRes] = await Promise.all([
-          fetch(`${baseURL}/api/admin/getStats`),
-          fetch(`${baseURL}/game/getAll`),
-          fetch(`${baseURL}/hero/getAll`),
-          fetch(`${baseURL}/platform/getAll`),
-          fetch(`${baseURL}/callsign/getAll`),
-          fetch(`${baseURL}/company/getAll`),
-          fetch(`${baseURL}/user/getAll`)
+          fetch(`${baseURL}/api/admin/getStats`, { headers: getFetchHeaders() }),
+          fetch(`${baseURL}/game/getAll`,        { headers: getFetchHeaders() }),
+          fetch(`${baseURL}/hero/getAll`,        { headers: getFetchHeaders() }),
+          fetch(`${baseURL}/platform/getAll`,    { headers: getFetchHeaders() }),
+          fetch(`${baseURL}/callsign/getAll`,    { headers: getFetchHeaders() }),
+          fetch(`${baseURL}/company/getAll`,     { headers: getFetchHeaders() }),
+          fetch(`${baseURL}/user/getAll`,        { headers: getFetchHeaders() })
         ]);
 
         const statsJson = await statsRes.json();
@@ -233,7 +232,8 @@ export default function MainPage() {
   
 
   const handleLogout = () => {
-    localStorage.removeItem("token"); // or sessionStorage
+    localStorage.removeItem("token"); 
+    localStorage.removeItem("user"); 
     window.location.href = "/login";
   };
 
@@ -244,6 +244,15 @@ export default function MainPage() {
       if (loggedUser?.userName) {
         setUserName(loggedUser.userName);
       }
+    }
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token || isTokenExpired(token)) {
+      localStorage.clear();
+      window.location.href = "/login";
     }
   }, []);
 

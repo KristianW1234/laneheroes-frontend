@@ -20,6 +20,8 @@ import GameSearch from "@/components/form/GameSearch";
 import UserSearch from "@/components/form/UserSearch";
 import UserView from "@/components/views/UserView";
 import { cardPerPage } from "@/utils/constants";
+import { getAxiosHeaders } from "@/utils/axiosHeaders";
+import { getFetchHeaders } from "@/utils/fetchHeaders";
 
 interface ViewProps {
   subject: string;
@@ -138,7 +140,7 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
 
       if (!url) return;
 
-      const res = await fetch(url);
+      const res = await fetch(url, {headers: getFetchHeaders()});
       const json = await res.json();
       console.log(`Response for ${subject} fetch:`, json);
       let result = json.data.content;
@@ -199,7 +201,7 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
       let json = null;
       let result = null;
       if (subject === "Hero" || subject === "Game" || subject === "User") {
-        res = await fetch(`${baseURL}/${subject.toLowerCase()}/search?page=${page}&size=${perPage}`);
+        res = await fetch(`${baseURL}/${subject.toLowerCase()}/search?page=${page}&size=${perPage}`, {headers: getFetchHeaders()});
         json = await res.json();
         result = json.data.content;
         if (result.length === 0 && page > 0) {
@@ -217,7 +219,7 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
         setTotalPages(json.data.totalPages);
 
       } else if (subject === "Platform" || subject === "Company" || subject === "Callsign") {
-        res = await fetch(`${baseURL}/${subject.toLowerCase()}/getAll`);
+        res = await fetch(`${baseURL}/${subject.toLowerCase()}/getAll`, {headers: getFetchHeaders()});
         json = await res.json();
         result = json.data;
         if (subject === "Company") {
@@ -279,7 +281,7 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
     try {
       
       const res = await fetch(
-        `${baseURL}/${subject.toLowerCase()}/search?${queryParams}&page=${page}&size=${perPage}`
+        `${baseURL}/${subject.toLowerCase()}/search?${queryParams}&page=${page}&size=${perPage}`, {headers: getFetchHeaders()}
       );
       const json = await res.json();
       const result = json.data.content;
@@ -401,8 +403,7 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
   };
 
   const executeUpdate = async (formData: FormData) => {
-    console.log("Executing update! for", subject, "with data:", JSON.stringify(formData));
-    await axios.patch(`${baseURL}/`+ subject.toLowerCase() +`/update`, formData);
+    await axios.patch(`${baseURL}/`+ subject.toLowerCase() +`/update`, formData, {headers: getAxiosHeaders()});
     toast.success(subject + " updated!");
   };
 
@@ -460,7 +461,7 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
   };
 
   const executeDelete = async (formData: FormData) => {
-    await axios.delete(`${baseURL}/`+ subject.toLowerCase() +`/delete/${formData}`);
+    await axios.delete(`${baseURL}/`+ subject.toLowerCase() +`/delete/${formData}`, {headers: getAxiosHeaders()});
     toast.success(subject + " deleted!");
   };
 

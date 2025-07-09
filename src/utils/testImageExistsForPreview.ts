@@ -10,7 +10,7 @@ export async function testImageExistsForPreview(
     const res = await fetch(url, {
       method: "GET",
       signal: controller.signal,
-      cache: "no-store",
+      cache: "no-store"
     });
 
     clearTimeout(timeout);
