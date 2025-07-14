@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createInputChangeHandler } from '@/utils/handleInputChange';
+import validateCompanyForm from '@/utils/validateForm/validateCompany';
 
 
 export default function CompanyAdd({
@@ -13,16 +14,25 @@ export default function CompanyAdd({
   onSuccess?: () => void; 
 }) {
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  const [form, setForm] = useState({
+  const initialFormData = {
     companyName: '',
     imgIcon: null as File | null,
-  });
+  };
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [addAnother, setAddAnother] = useState(false);
 
+  const [form, setForm] = useState(initialFormData);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    
   const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
   const handleSubmit = async () => {
+    const validationErrors = validateCompanyForm(form);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     const formData = new FormData();
 
     // Prepare the game JSON object
@@ -41,7 +51,13 @@ export default function CompanyAdd({
 
     try {
         await onSubmit("Company", formData);
-        onClose();      // Close modal
+        setErrors({});
+        if (addAnother) {
+          setForm(initialFormData);
+          setImagePreview(null);
+        } else {
+          onClose();      // Close modal
+        }
         onSuccess?.();
         
     } catch (err) {
@@ -70,10 +86,9 @@ export default function CompanyAdd({
           placeholder="Company Name"
           value={form.companyName}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.companyName ? 'border-red-500' : ''}`}
           required
         />
-
         
       </div>
 
@@ -99,7 +114,23 @@ export default function CompanyAdd({
         </div>
       )}
 
+      {Object.values(errors).length > 0 && (
+        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 text-sm rounded p-3">
+          {Object.values(errors).map((msg, idx) => (
+            <div key={idx}>• {msg}</div>
+          ))}
+        </div>
+      )}
+
       <div className="mt-6 flex justify-end gap-4">
+        <label className="flex items-center gap-2 mt-4">
+        <input
+          type="checkbox"
+          checked={addAnother}
+          onChange={() => setAddAnother(prev => !prev)}
+        />
+        <span>Keep modal open to add another</span>
+      </label>
         <button
           onClick={onClose}
           className="btn-base btn-gray"

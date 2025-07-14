@@ -3,6 +3,7 @@ import { Company } from '@/types/company';
 import { createInputChangeHandler } from '@/utils/handleInputChange';
 import { baseURL } from '@/utils/constants';
 import { testImageExistsForPreview } from '@/utils/testImageExistsForPreview';
+import validateCompanyForm from '@/utils/validateForm/validateCompany';
 
 
 export default function CompanyEdit({
@@ -27,10 +28,17 @@ export default function CompanyEdit({
     imgIcon: null as File | null,
   });
 
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
   const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
   const handleSubmit = async () => {
-    
+    const validationErrors = validateCompanyForm(form);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     const formData = new FormData();
 
     // Prepare the company JSON object
@@ -95,7 +103,7 @@ console.log(  'Submitting company form:', form);
           placeholder="Company Name"
           value={form.companyName}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.companyName ? 'border-red-500' : ''}`}
           required
         />
 
@@ -121,6 +129,14 @@ console.log(  'Submitting company form:', form);
             alt="Image preview"
             className="w-32 h-32 object-cover rounded shadow"
           />
+        </div>
+      )}
+
+      {Object.values(errors).length > 0 && (
+        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 text-sm rounded p-3">
+          {Object.values(errors).map((msg, idx) => (
+            <div key={idx}>• {msg}</div>
+          ))}
         </div>
       )}
 

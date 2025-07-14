@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createInputChangeHandler } from '@/utils/handleInputChange';
+import validateCallsignForm from '@/utils/validateForm/validateCallsign';
 
 
 export default function CallsignAdd({
@@ -12,18 +13,27 @@ export default function CallsignAdd({
   onSuccess?: () => void;
 
 }) {
-
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  const [form, setForm] = useState({
+  const initialFormData = {
     callsign: '',
     callsignPlural: '',
-  });
+  };
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  const [form, setForm] = useState(initialFormData);
+  const [addAnother, setAddAnother] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   
   const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
   const handleSubmit = async () => {
+    const validationErrors = validateCallsignForm(form);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+
+
     const callsignData = {
       callsign: form.callsign,
       callsignPlural: form.callsignPlural,
@@ -31,7 +41,14 @@ export default function CallsignAdd({
 
     try {
       await onSubmit("Callsign", callsignData);  // Directly pass JSON object
-      onClose();
+      setErrors({});
+      if (addAnother) {
+          setForm(initialFormData);
+          setImagePreview(null);
+          
+        } else {
+          onClose();      // Close modal
+        }
       onSuccess?.();
     } catch (err) {
       console.error('Failed to submit callsign:', err);
@@ -51,7 +68,7 @@ export default function CallsignAdd({
           placeholder="Callsign Name"
           value={form.callsign}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.callsign ? 'border-red-500' : ''}`}
           required
         />
 
@@ -61,7 +78,7 @@ export default function CallsignAdd({
           placeholder="Plural Form"
           value={form.callsignPlural}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.callsignPlural ? 'border-red-500' : ''}`}
           required
         />
 
@@ -69,10 +86,24 @@ export default function CallsignAdd({
         
       </div>
 
-
+      {Object.values(errors).length > 0 && (
+        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 text-sm rounded p-3">
+          {Object.values(errors).map((msg, idx) => (
+            <div key={idx}>• {msg}</div>
+          ))}
+        </div>
+      )}
       
 
       <div className="mt-6 flex justify-end gap-4">
+        <label className="flex items-center gap-2 mt-4">
+        <input
+          type="checkbox"
+          checked={addAnother}
+          onChange={() => setAddAnother(prev => !prev)}
+        />
+        <span>Keep modal open to add another</span>
+      </label>
         <button
           onClick={onClose}
           className="btn-base btn-gray"

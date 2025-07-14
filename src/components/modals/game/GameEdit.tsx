@@ -6,6 +6,7 @@ import { Callsign } from '@/types/callsign';
 import { baseURL } from '@/utils/constants';
 import { createInputChangeHandler } from '@/utils/handleInputChange';
 import { testImageExistsForPreview } from '@/utils/testImageExistsForPreview';
+import validateGameForm from '@/utils/validateForm/validateGame';
 
 export default function GameEdit({
   game,
@@ -28,6 +29,8 @@ export default function GameEdit({
         game.imgIcon || null
     );
 
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
     const [form, setForm] = useState({
         gameName: game.gameName,
         gameCode: game.gameCode,
@@ -40,6 +43,11 @@ export default function GameEdit({
     const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
     const handleSubmit = async () => {
+        const validationErrors = validateGameForm(form);
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
         const formData = new FormData();
 
         // Prepare the game JSON object
@@ -114,7 +122,7 @@ export default function GameEdit({
           placeholder="Game Name"
           value={form.gameName}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.gameName ? 'border-red-500' : ''}`}
           required
         />
 
@@ -124,7 +132,7 @@ export default function GameEdit({
           placeholder="Game Code"
           value={form.gameCode}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.gameCode ? 'border-red-500' : ''}`}
           required
         />
 
@@ -132,7 +140,7 @@ export default function GameEdit({
           name="platformId"
           value={form.platformId}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.platformId ? 'border-red-500' : ''}`}
           required
         >
           <option value="">Select Platform</option>
@@ -145,7 +153,7 @@ export default function GameEdit({
           name="callsignId"
           value={form.callsignId}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.callsignId ? 'border-red-500' : ''}`}
           required
         >
           <option value="">Select Callsign</option>
@@ -158,7 +166,7 @@ export default function GameEdit({
           name="companyId"
           value={form.companyId}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.companyId ? 'border-red-500' : ''}`}
           required
         >
           <option value="">Select Company</option>
@@ -189,6 +197,14 @@ export default function GameEdit({
             alt="Image preview"
             className="w-32 h-32 object-cover rounded shadow"
           />
+        </div>
+      )}
+
+      {Object.values(errors).length > 0 && (
+        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 text-sm rounded p-3">
+          {Object.values(errors).map((msg, idx) => (
+            <div key={idx}>• {msg}</div>
+          ))}
         </div>
       )}
 

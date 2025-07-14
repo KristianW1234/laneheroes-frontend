@@ -4,6 +4,7 @@ import { Hero } from '@/types/hero';
 import { baseURL } from '@/utils/constants';
 import { createInputChangeHandler } from '@/utils/handleInputChange';
 import { testImageExistsForPreview } from "@/utils/testImageExistsForPreview";
+import validateHeroForm from '@/utils/validateForm/validateHero';
 
 export default function HeroEdit({
   hero,
@@ -34,10 +35,18 @@ export default function HeroEdit({
         imgIcon: null as File | null, 
     });
 
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
     
     const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
     const handleSubmit = async () => {
+        const validationErrors = validateHeroForm(form);
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+
         const formData = new FormData();
 
         // Prepare the hero JSON object
@@ -111,7 +120,7 @@ export default function HeroEdit({
           placeholder="Hero Name"
           value={form.heroName}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.heroName ? 'border-red-500' : ''}`}
           required
         />
 
@@ -119,7 +128,7 @@ export default function HeroEdit({
           name="heroGender"
           value={form.heroGender}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.heroGender ? 'border-red-500' : ''}`}
           required
         >
           <option value="">Select Gender</option>
@@ -132,7 +141,7 @@ export default function HeroEdit({
           name="gameId"
           value={form.gameId}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.gameId ? 'border-red-500' : ''}`}
           required
         >
           <option value="">Select Game</option>
@@ -206,6 +215,14 @@ export default function HeroEdit({
             alt="Image preview"
             className="w-32 h-32 object-cover rounded shadow"
           />
+        </div>
+      )}
+
+      {Object.values(errors).length > 0 && (
+        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 text-sm rounded p-3">
+          {Object.values(errors).map((msg, idx) => (
+            <div key={idx}>• {msg}</div>
+          ))}
         </div>
       )}
 

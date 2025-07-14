@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Callsign } from '@/types/callsign';
 import { createInputChangeHandler } from '@/utils/handleInputChange';
+import validateCallsignForm from '@/utils/validateForm/validateCallsign';
 
 
 export default function CallsignEdit({
@@ -23,10 +24,17 @@ export default function CallsignEdit({
   });
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   
   const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
   const handleSubmit = async () => {
+    const validationErrors = validateCallsignForm(form);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     const callsignData = {
       id: callsign.id,  // Include ID for updates
       callsign: form.callsign,
@@ -56,7 +64,7 @@ export default function CallsignEdit({
           placeholder="Callsign Name"
           value={form.callsign}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.callsign ? 'border-red-500' : ''}`}
           required
         />
 
@@ -66,7 +74,7 @@ export default function CallsignEdit({
           placeholder="Plural Form"
           value={form.callsignPlural}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.callsignPlural ? 'border-red-500' : ''}`}
           required
         />
 
@@ -74,8 +82,13 @@ export default function CallsignEdit({
         
       </div>
 
-
-      
+      {Object.values(errors).length > 0 && (
+        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 text-sm rounded p-3">
+          {Object.values(errors).map((msg, idx) => (
+            <div key={idx}>• {msg}</div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 flex justify-end gap-4">
         <button

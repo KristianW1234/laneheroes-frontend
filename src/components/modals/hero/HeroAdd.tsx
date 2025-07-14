@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Game } from '@/types/game';
 import { createInputChangeHandler } from '@/utils/handleInputChange';
+import validateHeroForm from '@/utils/validateForm/validateHero';
 
 
 export default function HeroAdd({
@@ -15,9 +16,7 @@ export default function HeroAdd({
   games: Game[];
 }) {
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  const [form, setForm] = useState({
+  const initialFormData ={
     heroName: '',
     heroGender: '',
     gameId: '',
@@ -27,12 +26,21 @@ export default function HeroAdd({
     heroDescription: '',
     heroLore: '',
     imgIcon: null as File | null,
-  });
+  }
 
-  
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [addAnother, setAddAnother] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [form, setForm] = useState(initialFormData);
+
   const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
   const handleSubmit = async () => {
+    const validationErrors = validateHeroForm(form);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
     const formData = new FormData();
 
     // Prepare the hero JSON object
@@ -60,7 +68,14 @@ export default function HeroAdd({
     
     try {
         await onSubmit("Hero", formData);
-        onClose();      // Close modal
+        setErrors({});
+        if (addAnother){
+          setForm(initialFormData);
+          setImagePreview(null);
+        } else {
+          onClose();      // Close modal
+        }
+        
         onSuccess?.();
         
     } catch (err) {
@@ -89,7 +104,7 @@ export default function HeroAdd({
           placeholder="Hero Name"
           value={form.heroName}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.heroName ? 'border-red-500' : ''}`}
           required
         />
 
@@ -97,7 +112,7 @@ export default function HeroAdd({
           name="heroGender"
           value={form.heroGender}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.heroGender ? 'border-red-500' : ''}`}
           required
         >
           <option value="">Select Gender</option>
@@ -110,7 +125,7 @@ export default function HeroAdd({
           name="gameId"
           value={form.gameId}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.gameId ? 'border-red-500' : ''}`}
           required
         >
           <option value="">Select Game</option>
@@ -187,7 +202,23 @@ export default function HeroAdd({
         </div>
       )}
 
+      {Object.values(errors).length > 0 && (
+        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 text-sm rounded p-3">
+          {Object.values(errors).map((msg, idx) => (
+            <div key={idx}>• {msg}</div>
+          ))}
+        </div>
+      )}
+
       <div className="mt-6 flex justify-end gap-4">
+        <label className="flex items-center gap-2 mt-4">
+        <input
+          type="checkbox"
+          checked={addAnother}
+          onChange={() => setAddAnother(prev => !prev)}
+        />
+        <span>Keep modal open to add another</span>
+      </label>
         <button
           onClick={onClose}
           className="btn-base btn-gray"

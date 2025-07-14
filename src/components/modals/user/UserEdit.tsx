@@ -28,13 +28,34 @@ export default function UserEdit({
     isActive: user.isActive
   
   });
+
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!form.userName.trim()) {
+      newErrors.userName = "User name is required.";
+    }
+
+    if (!form.userRole) {
+      newErrors.userRole = "User role is required.";
+    }
+
+    if (!isValidEmail(form.userEmail)) {
+      newErrors.userEmail = "Invalid email format.";
+    }
+
+   return newErrors;
+  };
   
   const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
   const handleSubmit = async () => {
 
-    if (!isValidEmail(form.userEmail)) {
-      toast.error("Invalid email format.");
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
     
@@ -71,18 +92,18 @@ export default function UserEdit({
           placeholder="User Name"
           value={form.userName}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.userName ? 'border-red-500' : ''}`}
           required
         />
 
         <input
           type="password"
           name="userPassword"
-          placeholder="New Password"
+          placeholder="New Password (Leave blank to keep current)"
           value={form.userPassword}
           onChange={handleChange}
           className="input-text"
-          required
+          
         />
 
         <input
@@ -91,16 +112,14 @@ export default function UserEdit({
           placeholder="User Email"
           value={form.userEmail}
           onChange={handleChange}
-          className="input-text"
-          required
+          className={`input-text ${errors.userEmail ? 'border-red-500' : ''}`}
         />
 
         <select
           name="userRole"
           value={form.userRole}
           onChange={handleChange}
-          className="input-text"
-          required
+          className={`input-text ${errors.userRole ? 'border-red-500' : ''}`}
         >
           <option value="">Select Role</option>
           <option value="ADMIN">Admin</option>
@@ -122,8 +141,13 @@ export default function UserEdit({
         
       </div>
 
-
-      
+      {Object.values(errors).length > 0 && (
+        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 text-sm rounded p-3">
+          {Object.values(errors).map((msg, idx) => (
+            <div key={idx}>• {msg}</div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 flex justify-end gap-4">
         <button

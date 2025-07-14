@@ -139,10 +139,15 @@ export default function MainPage() {
 
   const handleAdd = async (subject: string, formData : FormData) =>{
     try{
-      
-      await axios.post(`${baseURL}/`+subject.toLowerCase()+`/add`, formData, {headers: getAxiosHeaders()});
+      console.log("Upload Add with formData: ", formData);
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+      const response = await axios.post(`${baseURL}/`+subject.toLowerCase()+`/add`, formData, {headers: getAxiosHeaders()});
+      console.log("Response from add: ", response);
       toast.success(subject+ " added!");
     }catch(error){
+      console.error("Failed to add " + subject.toLowerCase() + ":", error);
       toast.error("Failed to add " + subject.toLowerCase() );
     }
   }
@@ -227,6 +232,7 @@ export default function MainPage() {
 
   const resetCurrentView = () => {
     setCurrentView(null);
+    refreshStats();
   }
 
   

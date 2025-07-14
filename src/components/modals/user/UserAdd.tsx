@@ -14,24 +14,47 @@ export default function UserAdd({
   onSuccess?: () => void; 
   
 }) {
-
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  const [form, setForm] = useState({
+  const initialFormData = {
     userName: '',
     userPassword: '',
     userRole: '',
     userEmail: '',
     isActive: false
-  
-  });
+  };
 
-  
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [form, setForm] = useState(initialFormData);
+  const [addAnother, setAddAnother] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!form.userName.trim()) {
+      newErrors.userName = "User name is required.";
+    }
+
+    if (!form.userPassword.trim()) {
+      newErrors.userPassword = "User password is required.";
+    }
+
+    if (!form.userRole) {
+      newErrors.userRole = "User role is required.";
+    }
+
+    if (!isValidEmail(form.userEmail)) {
+      newErrors.userEmail = "Invalid email format.";
+    }
+
+   return newErrors;
+  };
   const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
   const handleSubmit = async () => {
-    if (!isValidEmail(form.userEmail)) {
-      toast.error("Invalid email format.");
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
@@ -45,7 +68,13 @@ export default function UserAdd({
 
     try {
       await onSubmit("User", userData);  // Directly pass JSON object
-      onClose();      
+      setErrors({});
+      if (addAnother) {
+          setForm(initialFormData);
+          setImagePreview(null);
+        } else {
+          onClose();      // Close modal
+        }      
       onSuccess?.();
     } catch (err) {
       console.error('Failed to submit user:', err);
@@ -65,7 +94,7 @@ export default function UserAdd({
           placeholder="User Name"
           value={form.userName}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.userName ? 'border-red-500' : ''}`}
           required
         />
 
@@ -75,7 +104,7 @@ export default function UserAdd({
           placeholder="User Password"
           value={form.userPassword}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.userPassword ? 'border-red-500' : ''}`}
           required
         />
 
@@ -85,7 +114,7 @@ export default function UserAdd({
           placeholder="User Email"
           value={form.userEmail}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.userEmail ? 'border-red-500' : ''}`}
           required
         />
 
@@ -93,7 +122,7 @@ export default function UserAdd({
           name="userRole"
           value={form.userRole}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.userRole ? 'border-red-500' : ''}`}
           required
         >
           <option value="">Select Role</option>
@@ -117,9 +146,23 @@ export default function UserAdd({
       </div>
 
 
-      
+      {Object.values(errors).length > 0 && (
+        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 text-sm rounded p-3">
+          {Object.values(errors).map((msg, idx) => (
+            <div key={idx}>• {msg}</div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 flex justify-end gap-4">
+        <label className="flex items-center gap-2 mt-4">
+        <input
+          type="checkbox"
+          checked={addAnother}
+          onChange={() => setAddAnother(prev => !prev)}
+        />
+        <span>Keep modal open to add another</span>
+      </label>
         <button
           onClick={onClose}
           className="btn-base btn-gray"

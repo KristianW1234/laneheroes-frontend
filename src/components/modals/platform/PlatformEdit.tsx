@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Platform } from '@/types/platform';
 import { createInputChangeHandler } from '@/utils/handleInputChange';
+import validatePlatformForm from '@/utils/validateForm/validatePlatform';
 
 export default function PlatformEdit({
   platform,
@@ -16,6 +17,7 @@ export default function PlatformEdit({
 }) {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const [form, setForm] = useState({
     platformName: platform.platformName || '',
@@ -26,6 +28,11 @@ export default function PlatformEdit({
   const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
   const handleSubmit = async () => {
+    const validationErrors = validatePlatformForm(form);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
     const platformData = {
       id: platform.id,  
       platformName: form.platformName,
@@ -53,7 +60,7 @@ export default function PlatformEdit({
           placeholder="Platform Name"
           value={form.platformName}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.platformName ? 'border-red-500' : ''}`}
           required
         />
 
@@ -61,8 +68,13 @@ export default function PlatformEdit({
         
       </div>
 
-
-      
+      {Object.values(errors).length > 0 && (
+        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 text-sm rounded p-3">
+          {Object.values(errors).map((msg, idx) => (
+            <div key={idx}>• {msg}</div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 flex justify-end gap-4">
         <button

@@ -219,12 +219,14 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
         setTotalPages(json.data.totalPages);
 
       } else if (subject === "Platform" || subject === "Company" || subject === "Callsign") {
+        console.log("Refreshing reference data for " + subject);
         res = await fetch(`${baseURL}/${subject.toLowerCase()}/getAll`, {headers: getFetchHeaders()});
         json = await res.json();
         result = json.data;
         if (subject === "Company") {
           setCompanies(result);
         } else if (subject === "Platform") {
+          console.log("Setting platforms: " + JSON.stringify(result));
           setPlatforms(result);
         } else if (subject === "Callsign") {
           setCallsigns(result);

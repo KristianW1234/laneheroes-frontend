@@ -3,6 +3,7 @@ import { Platform } from '@/types/platform';
 import { Callsign } from '@/types/callsign';
 import { Company } from '@/types/company';
 import { createInputChangeHandler } from '@/utils/handleInputChange';
+import validateGameForm from '@/utils/validateForm/validateGame';
 
 
 export default function GameAdd({
@@ -21,20 +22,30 @@ export default function GameAdd({
   companies: Company[];
 }) {
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  const [form, setForm] = useState({
+  const initialFormData = {
     gameName: '',
     gameCode: '',
     platformId: '',
     callsignId: '',
     companyId: '',
     imgIcon: null as File | null,
-  });
+  };
+
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [form, setForm] = useState(initialFormData);
+  const [addAnother, setAddAnother] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const handleChange = createInputChangeHandler(setForm, setImagePreview);
 
   const handleSubmit = async () => {
+    const validationErrors = validateGameForm;
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     const formData = new FormData();
 
     // Prepare the game JSON object
@@ -62,11 +73,17 @@ export default function GameAdd({
 
     try {
         await onSubmit("Game",formData);
-        onClose();      // Close modal
+        setErrors({});
+        if (addAnother) {
+          setForm(initialFormData);
+          setImagePreview(null);
+        } else {
+          onClose();      // Close modal
+        }
         onSuccess?.();
         
     } catch (err) {
-        console.error('Failed to submit hero:', err);
+        console.error('Failed to submit game:', err);
     }
 
     
@@ -91,7 +108,7 @@ export default function GameAdd({
           placeholder="Game Name"
           value={form.gameName}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.gameName ? 'border-red-500' : ''}`}
           required
         />
 
@@ -101,7 +118,7 @@ export default function GameAdd({
           placeholder="Game Code"
           value={form.gameCode}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.gameCode ? 'border-red-500' : ''}`}
           required
         />
 
@@ -109,7 +126,7 @@ export default function GameAdd({
           name="platformId"
           value={form.platformId}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.platformId ? 'border-red-500' : ''}`}
           required
         >
           <option value="">Select Platform</option>
@@ -122,7 +139,7 @@ export default function GameAdd({
           name="callsignId"
           value={form.callsignId}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.callsignId ? 'border-red-500' : ''}`}
           required
         >
           <option value="">Select Callsign</option>
@@ -135,7 +152,7 @@ export default function GameAdd({
           name="companyId"
           value={form.companyId}
           onChange={handleChange}
-          className="input-text"
+          className={`input-text ${errors.companyId ? 'border-red-500' : ''}`}
           required
         >
           <option value="">Select Company</option>
@@ -169,7 +186,23 @@ export default function GameAdd({
         </div>
       )}
 
+      {Object.values(errors).length > 0 && (
+        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 text-sm rounded p-3">
+          {Object.values(errors).map((msg, idx) => (
+            <div key={idx}>• {msg}</div>
+          ))}
+        </div>
+      )}
+
       <div className="mt-6 flex justify-end gap-4">
+        <label className="flex items-center gap-2 mt-4">
+        <input
+          type="checkbox"
+          checked={addAnother}
+          onChange={() => setAddAnother(prev => !prev)}
+        />
+        <span>Keep modal open to add another</span>
+      </label>
         <button
           onClick={onClose}
           className="btn-base btn-gray"
