@@ -14,6 +14,7 @@ export default function AdminStats({ stats }: Props) {
       <StatCard label="Games" value={stats.games} />
       <StatCard label="Heroes" value={stats.heroes} />
       <StatCard label="Users" value={stats.users} />
+      <StatCard label="Skills" value={stats.skills} />
     </div>
   );
 }

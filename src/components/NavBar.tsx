@@ -88,6 +88,19 @@ const menuItems: MenuItem[] = [
             route: "#",
           }
         ],
+    },
+    {
+        title: "Skill",
+        children: [
+          {
+            title: "View",
+            route: "#",
+          },
+          {
+            title: "Add",
+            route: "#",
+          }
+        ],
     }
     
     

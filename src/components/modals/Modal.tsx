@@ -4,18 +4,24 @@ import PlatformDetail from "./platform/PlatformDetail";
 import CompanyDetail from "./company/CompanyDetail"
 import CallsignDetail from "./callsign/CallsignDetail"
 import UserDetail from "./user/UserDetail"
+import SkillDetail from "./skill/SkillDetail";
+
 import HeroAdd from "./hero/HeroAdd"; 
 import GameAdd from "./game/GameAdd"; 
 import PlatformAdd from "./platform/PlatformAdd"; 
 import CompanyAdd from "./company/CompanyAdd"; 
 import CallsignAdd from "./callsign/CallsignAdd"; 
 import UserAdd from "./user/UserAdd"; 
+import SkillAdd from "./skill/SkillAdd";
+
 import HeroEdit from "./hero/HeroEdit"; 
 import GameEdit from "./game/GameEdit"; 
 import PlatformEdit from "./platform/PlatformEdit"; 
 import CompanyEdit from "./company/CompanyEdit"; 
 import CallsignEdit from "./callsign/CallsignEdit"; 
 import UserEdit from "./user/UserEdit"; 
+import SkillEdit from "./skill/SkillEdit";
+
 import ConfirmDelete from "./ConfirmDelete";
 import ConfirmLogout from "./ConfirmLogout";
 
@@ -52,6 +58,9 @@ export default function Modal({
       break;
     case "user-detail": 
       content = <UserDetail {...modalProps} onClose={onClose} />;
+      break;
+    case "skill-detail": 
+      content = <SkillDetail {...modalProps} onClose={onClose} />;
       break;
     case "hero-add":
       content = (
@@ -110,6 +119,17 @@ export default function Modal({
     case "user-add":
       content = (
         <UserAdd
+          onClose={onClose}
+          onSubmit={modalProps.onSubmit}
+          onSuccess={modalProps.onSuccess}
+        
+        />
+      );
+      break;
+    case "skill-add":
+      content = (
+        <SkillAdd
+          heroes={modalProps.heroes}
           onClose={onClose}
           onSubmit={modalProps.onSubmit}
           onSuccess={modalProps.onSuccess}
@@ -187,7 +207,18 @@ export default function Modal({
         />
       );
       break;
-    case "confirm-delete":
+    case "skill-edit":
+      content = (
+        <SkillEdit
+          skill={modalProps.skill}
+          heroes={modalProps.heroes}
+          onClose={onClose}
+          onSubmit={modalProps.onSubmit}
+          onSuccess={modalProps.onSuccess}
+        
+        />
+      );
+      break;case "confirm-delete":
       content = <ConfirmDelete {...modalProps} onClose={onClose} />;
       break;
     case "confirm-logout":

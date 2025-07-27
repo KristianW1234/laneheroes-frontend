@@ -15,8 +15,15 @@ interface HeroCardProps extends CardActionHandlers<Hero> {
 
 export default function HeroCard({ hero, onEdit, onDelete, onDetail }: HeroCardProps) {
 
+  
   const [heroImgSrc, setHeroImgSrc] = useState<string | null>(`${baseURL}/images/hero/${hero.imgIcon}`);
   const [gameImgSrc, setGameImgSrc] = useState<string | null>(`${baseURL}/images/game/${hero.game.imgIcon}`);
+
+  const [skillImgSrcMap, setSkillImgSrcMap] = useState<Record<number, string>>({});
+
+  const heroCodeParts = hero.heroCode.split('_');
+      const heroFolder = heroCodeParts[0].toLowerCase();
+      const gameFolder = heroCodeParts[1].toLowerCase();
 
 
 useEffect(() => {
@@ -24,6 +31,34 @@ useEffect(() => {
     testImageExists(`${gameImgSrc}`, () => setGameImgSrc(`${baseURL}/images/noimage.png`));
     
   }, []);
+
+  useEffect(() => {
+  const updatedMap: Record<number, string> = {};
+
+    hero.skills.forEach(async (skill) => {
+      
+
+      let testImgSrc = `${baseURL}/images/skill/${gameFolder}/${heroFolder}/${skill.imgIcon}`;
+
+      if (skill.imgIcon === "dota-innate.png") {
+        testImgSrc = `${baseURL}/images/skill/${gameFolder}/${skill.imgIcon}`;
+      }
+
+      await testImageExists(testImgSrc, () => {
+        // On fail: set fallback
+        setSkillImgSrcMap(prev => ({
+          ...prev,
+          [skill.id]: `${baseURL}/images/noimage.png`
+        }));
+      });
+
+      // If no fail was triggered, assume it's valid
+      setSkillImgSrcMap(prev => ({
+        ...prev,
+        [skill.id]: testImgSrc
+      }));
+    });
+  }, [hero.skills]);
 
 
 
@@ -75,8 +110,23 @@ useEffect(() => {
         {hero.heroDescription}
       </div>
 
+     {/* Skill Icons Section */}
+      <div className="flex items-center justify-center gap-2 mt-2 mb-2">
+        {hero.skills.map(skill => (
+          <div key={skill.id} className="w-[30px] h-[30px] flex items-center justify-center">
+            <Image
+              src={skillImgSrcMap[skill.id] || '/loading-placeholder.png'}
+              alt={skill.skillName}
+              width={30}
+              height={30}
+              className="rounded shadow"
+            />
+          </div>
+        ))}
+      </div>
+
       {/* Buttons */}
-      <div className="flex justify-between mt-auto">
+      <div className="flex justify-between mt-2">
         <button
           className="btn-base btn-blue"
           onClick={() => onDetail(hero)}

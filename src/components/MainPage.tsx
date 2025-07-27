@@ -12,6 +12,7 @@ import { Platform } from '@/types/platform';
 import { Callsign } from '@/types/callsign';
 import { Company } from '@/types/company';
 import { User } from '@/types/user';
+import { Skill } from '@/types/skill';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { baseURL } from '@/utils/constants';
@@ -27,7 +28,8 @@ export default function MainPage() {
     users: 0,
     platforms: 0,
     callsigns: 0,
-    companies: 0
+    companies: 0,
+    skills: 0
   });
 
   const [currentView, setCurrentView] = useState<string | null>(null);
@@ -42,7 +44,8 @@ export default function MainPage() {
   const [allPlatforms, setAllPlatforms] = useState<Platform[]>([]);
   const [allHeroes, setAllHeroes] = useState<Hero[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  
+  const [allSkills, setAllSkills] = useState<Skill[]>([]);
+
   const refreshViewRef = useRef<(() => void) | null>(null);
 
   const openModal = (type: string, props?: any) => {
@@ -51,6 +54,7 @@ export default function MainPage() {
   };
 
   const refreshStats = async () => {
+    console.log("RefreshStats is being called");
     const res = await fetch(`${baseURL}/api/admin/getStats`,{headers: getFetchHeaders()});
     const json = await res.json();
     setStats(json.data);
@@ -61,6 +65,7 @@ export default function MainPage() {
           platforms: json.data.platforms,
           callsigns: json.data.callsigns,
           companies: json.data.companies,
+          skills: json.data.skills
           
         });
   };
@@ -126,6 +131,16 @@ export default function MainPage() {
           },
         });
         break;
+      case "Skill":
+        openModal("skill-add", {
+          heroes: allHeroes,
+          onSubmit: handleAdd,
+          onSuccess: () => {
+            refreshStats();
+            refreshViewRef.current?.();
+          },
+        });
+        break;
       default:
         return;
     }
@@ -180,14 +195,15 @@ export default function MainPage() {
   useEffect(() => {
     async function fetchAll() {
       try {
-        const [statsRes, gamesRes, heroesRes, platformsRes, callsignsRes, companiesRes, usersRes] = await Promise.all([
+        const [statsRes, gamesRes, heroesRes, platformsRes, callsignsRes, companiesRes, usersRes, skillsRes] = await Promise.all([
           fetch(`${baseURL}/api/admin/getStats`, { headers: getFetchHeaders() }),
           fetch(`${baseURL}/game/getAll`,        { headers: getFetchHeaders() }),
           fetch(`${baseURL}/hero/getAll`,        { headers: getFetchHeaders() }),
           fetch(`${baseURL}/platform/getAll`,    { headers: getFetchHeaders() }),
           fetch(`${baseURL}/callsign/getAll`,    { headers: getFetchHeaders() }),
           fetch(`${baseURL}/company/getAll`,     { headers: getFetchHeaders() }),
-          fetch(`${baseURL}/user/getAll`,        { headers: getFetchHeaders() })
+          fetch(`${baseURL}/user/getAll`,        { headers: getFetchHeaders() }),
+          fetch(`${baseURL}/skill/getAll`,        { headers: getFetchHeaders() })
         ]);
 
         const statsJson = await statsRes.json();
@@ -197,6 +213,7 @@ export default function MainPage() {
         const callsignsJson = await callsignsRes.json();
         const companiesJson = await companiesRes.json();
         const usersJson = await usersRes.json();
+        const skillsJson = await skillsRes.json();
 
         setStats({
           heroes: statsJson.data.heroes,
@@ -205,7 +222,7 @@ export default function MainPage() {
           platforms: statsJson.data.platforms,
           callsigns: statsJson.data.callsigns,
           companies: statsJson.data.companies,
-          
+          skills: statsJson.data.skills
         });
 
         setAllGames(gamesJson.data);
@@ -214,6 +231,9 @@ export default function MainPage() {
         setAllCallsigns(callsignsJson.data);
         setAllPlatforms(platformsJson.data);
         setAllUsers(usersJson.data);
+        setAllSkills(skillsJson.data);
+        console.log("Skills fetched:", skillsJson.data);
+        
       } catch (err) {
         console.error('Failed to fetch:', err);
       }
@@ -262,6 +282,10 @@ export default function MainPage() {
     }
   }, []);
 
+  useEffect(() => {
+  console.log("✅ allSkills updated:", allSkills);
+}, [allSkills]);
+
   return (
     <div className="mx-auto relative">
       <div className="-mx-6 bg-blue-400 border-b border-gray-300">
@@ -304,6 +328,7 @@ export default function MainPage() {
             callsigns: allCallsigns,
             platforms: allPlatforms,
             users: allUsers,
+            skills: allSkills,
           }}
         >
             <View 

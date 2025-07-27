@@ -1,4 +1,5 @@
 import { Game } from './game';
+import { Skill } from './skill';
 
 export interface Hero {
   id: number;
@@ -11,5 +12,6 @@ export interface Hero {
   displayByTitle: string;
   heroDescription: string;
   heroLore: string;
-  game: Game
+  game: Game;
+  skills: Skill[];
 }

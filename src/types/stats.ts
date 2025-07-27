@@ -5,4 +5,5 @@ export type Stats = {
   platforms: number;
   callsigns: number;
   companies: number;
+  skills: number;
 };

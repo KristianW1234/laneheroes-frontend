@@ -5,6 +5,7 @@ import { Company } from "@/types/company";
 import { Platform } from "@/types/platform";
 import { Callsign } from "@/types/callsign";
 import { User } from "@/types/user";
+import { Skill } from "@/types/skill";
 
 export const ReferenceDataContext = createContext<{
   heroes: Hero[];
@@ -13,6 +14,7 @@ export const ReferenceDataContext = createContext<{
   platforms: Platform[];
   callsigns: Callsign[];
   users: User[];
+  skills: Skill[];
   
 }>({
   heroes: [],
@@ -21,5 +23,6 @@ export const ReferenceDataContext = createContext<{
   platforms: [],
   callsigns: [],
   users: [],
+  skills: [],
   
 });

@@ -9,15 +9,18 @@ import { Company } from "@/types/company";
 import CallsignCard from "@/components/cards/CallsignCard";
 import { Callsign } from "@/types/callsign";
 import { User } from "@/types/user";
+import SkillCard from "@/components/cards/SkillCard";
+import { Skill } from "@/types/skill";
 import { useEffect, useState } from "react";
 import { baseURL } from "@/utils/constants";
-import axios from 'axios';
+import axios, { all } from 'axios';
 import toast from 'react-hot-toast';
 import { useContext } from "react";
 import { ReferenceDataContext } from "@/contexts/ReferenceDataContext";
 import HeroSearch from "@/components/form/HeroSearch";
 import GameSearch from "@/components/form/GameSearch";
 import UserSearch from "@/components/form/UserSearch";
+import SkillSearch from "@/components/form/SkillSearch";
 import UserView from "@/components/views/UserView";
 import { cardPerPage } from "@/utils/constants";
 import { getAxiosHeaders } from "@/utils/axiosHeaders";
@@ -37,12 +40,14 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
   const [companies, setCompanies] = useState<Company[]>([]);
   const [callsigns, setCallsigns] = useState<Callsign[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [page, setPage] = useState(0);
   const perPage = cardPerPage;
   const [hasMore, setHasMore] = useState(true);
   const [totalPages, setTotalPages] = useState(0);
   const [modalContent, setModalContent] = useState<string | null>(null);
   const [modalData, setModalData] = useState<any>(null);
+  
 
   const { games: allGames } = useContext(ReferenceDataContext);
   const { heroes: allHeroes } = useContext(ReferenceDataContext);
@@ -50,11 +55,14 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
   const { companies: allCompanies } = useContext(ReferenceDataContext);
   const { platforms: allPlatforms } = useContext(ReferenceDataContext);
   const { users: allUsers } = useContext(ReferenceDataContext);
+  const { skills: allSkills } = useContext(ReferenceDataContext);
 
   function renderCards() {
     let cards = null;
+    console.log("Rendering cards for subject:", subject);
     switch (subject) {
         case "Hero":
+          console.log("Rendering heroes:", heroes);
           cards = heroes.map((hero) => (
             <HeroCard
               key={hero.id}
@@ -77,6 +85,7 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
           ));
           break;
         case "Platform":
+          console.log("Rendering platforms:", platforms);
           cards = platforms.map((platform) => (
             <PlatformCard
               key={platform.id}
@@ -109,6 +118,18 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
             />
           ));
           break;
+        case "Skill":
+          console.log("Rendering skills:", skills);
+          cards = skills.map((skill) => (
+            <SkillCard
+              key={skill.id}
+              skill={skill}
+              onDetail={() => handleDetail(skill)}
+              onEdit={() => handleEdit(skill)}
+              onDelete={() => handleDelete(skill)}
+            />
+          ));
+          break;
       }
     return cards; // Add other subjects as needed
   }
@@ -121,6 +142,10 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
     onDelete={(user) => handleDelete(user)}
     />;
   }
+
+  useEffect(() => {
+    console.log('Skills from context:', skills);
+  }, [skills]);
     
   
 
@@ -132,7 +157,7 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
     const fetchData = async () => {
     try {
       let url = `${baseURL}/`+subject.toLowerCase()+`/`;
-      if (subject === "Hero" || subject === "Game" || subject === "User") {
+      if (subject === "Hero" || subject === "Game" || subject === "User" || subject === "Skill") {
         url += `search?page=${page}&size=${perPage}`;
       } else if (subject === "Platform" || subject === "Company" || subject === "Callsign") {
         url += `getAll`;
@@ -145,14 +170,15 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
       console.log(`Response for ${subject} fetch:`, json);
       let result = json.data.content;
 
-      if (subject === "Hero" || subject === "Game" || subject === "User") {
+      if (subject === "Hero" || subject === "Game" || subject === "User" || subject === "Skill") {
         if (subject === "Hero") {
           setHeroes(result);
         } else if (subject === "Game") {
           setGames(result);
-        }
-        else if (subject === "User") {
+        } else if (subject === "User") {
           setUsers(result);
+        } else if (subject === "Skill") {
+          setSkills(result);
         }
         setHasMore(result.length === perPage);
         setTotalPages(json.data.totalPages);
@@ -200,7 +226,7 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
       let res = null
       let json = null;
       let result = null;
-      if (subject === "Hero" || subject === "Game" || subject === "User") {
+      if (subject === "Hero" || subject === "Game" || subject === "User" || subject === "Skill") {
         res = await fetch(`${baseURL}/${subject.toLowerCase()}/search?page=${page}&size=${perPage}`, {headers: getFetchHeaders()});
         json = await res.json();
         result = json.data.content;
@@ -214,6 +240,8 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
           setGames(result);
         } else if (subject === "User") {
           setUsers(result);
+        } else if (subject === "Skill") {
+          setSkills(result);
         }
         setHasMore(result.length === perPage);
         setTotalPages(json.data.totalPages);
@@ -260,10 +288,16 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
     role: string;
   };
 
+  type SkillFilter = {
+    name: string;
+    heroId: string;
+  };
+
   type FilterMap = {
     Hero: HeroFilter;
     Game: GameFilter;
     User: UserFilter;
+    Skill: SkillFilter;
     // Add more subjects and their filters here
   };
 
@@ -328,7 +362,17 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
 
   };
 
-  type acceptableItems = Hero | Game | Platform | Company | Callsign | User;
+  const filterSkills = (filters: SkillFilter) => {
+    
+    doFilter(
+      "Skill",
+      filters,
+      setSkills
+    );
+
+  };
+
+  type acceptableItems = Hero | Game | Platform | Company | Callsign | User | Skill;
   
 
   const handleDetail = (item: acceptableItems) => {
@@ -344,13 +388,13 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
       onModalOpen("callsign-detail", { callsign: item });
     } else if (subject === "User") {
       onModalOpen("user-detail", { user: item });
+    } else if (subject === "Skill") {
+      onModalOpen("skill-detail", { skill: item });
     }
     
   };
 
   const handleEdit = (item: acceptableItems) => {
-    console.log("Handling edit for item: " + JSON.stringify(item));
-    console.log("The subject is: " + subject);
     if (subject === "Hero") {
       onModalOpen("hero-edit", {
         hero: item as Hero,
@@ -402,6 +446,15 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
         onSuccess: refreshView,
       });
     }
+
+    if (subject === "Skill") {
+      onModalOpen("skill-edit", {
+        skill: item as Skill,
+        heroes: allHeroes,
+        onSubmit: executeUpdate,
+        onSuccess: refreshView,
+      });
+    }
   };
 
   const executeUpdate = async (formData: FormData) => {
@@ -413,6 +466,12 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
     let itemName = "";
     if (subject === "Hero"){
       itemName = (item as Hero).heroName;
+      const isUsedBySkill = allSkills.some(skill => skill.heroId === item.id);
+      if (isUsedBySkill){
+        toast.error("This hero cannot be deleted because it is used by one or more skills.");
+        return;
+      }
+
       if ((item as Hero).displayByTitle === 'Y') {
         itemName = (item as Hero).heroTitle;
       } 
@@ -446,7 +505,9 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
       }
     } else if (subject === "User") {
       itemName = (item as User).userName;
-    }
+    } else if (subject === "Skill") {
+      itemName = (item as Skill).skillName;
+    } 
     
     
     
@@ -479,6 +540,8 @@ export default function View({ subject, onModalOpen, refreshStats, onRegisterRef
         <GameSearch companies={allCompanies} platforms={allPlatforms} callsigns={allCallsigns} onFilter={filterGames} />
       ) : subject === "User" ? (
         <UserSearch users={allUsers} onFilter={filterUsers} />
+      ) : subject === "Skill" ? (
+        <SkillSearch heroes={allHeroes} onFilter={filterSkills} />
       ) : (
         <div className="text-gray-600 italic">
           Filter feature not available for {subject}
