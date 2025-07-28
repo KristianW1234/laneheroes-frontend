@@ -15,7 +15,7 @@ interface GameCardProps extends CardActionHandlers<Game> {
 
 export default function GameCard({ game, onEdit, onDelete, onDetail }: GameCardProps) {
 
-  const [gameImgSrc, setGameImgSrc] = useState<string | null>(`${baseURL}/images/hero/${game.imgIcon}`);
+  const [gameImgSrc, setGameImgSrc] = useState<string | null>(`${baseURL}/images/game/${game.imgIcon}`);
     const [companyImgSrc, setCompanyImgSrc] = useState<string | null>(`${baseURL}/images/company/${game.company.imgIcon}`);
   
   
